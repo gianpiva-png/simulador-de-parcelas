@@ -1,0 +1,437 @@
+"use client";
+
+import { useState, useCallback, useMemo } from "react";
+import { Copy, Trash2, Check } from "lucide-react";
+import { calculatePMT } from "@/lib/pmt";
+import {
+  formatCurrency,
+  parseCurrencyInput,
+  formatCurrencyInput,
+} from "@/lib/currency";
+
+const PARCELA_SHORTCUTS = [4, 6, 9, 12, 18, 24] as const;
+
+export default function SimuladorPage() {
+  const [valorReformaRaw, setValorReformaRaw] = useState("");
+  const [entradaPrevistaRaw, setEntradaPrevistaRaw] = useState("");
+  const [parcelasRaw, setParcelasRaw] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [touched, setTouched] = useState({
+    valorReforma: false,
+    entradaPrevista: false,
+    parcelas: false,
+  });
+
+  const valorReforma = parseCurrencyInput(valorReformaRaw);
+  const entradaPrevista = parseCurrencyInput(entradaPrevistaRaw);
+  const parcelas = parseInt(parcelasRaw || "0", 10);
+
+  const validation = useMemo(() => {
+    const errors: Record<string, string | null> = {
+      valorReforma: null,
+      entradaPrevista: null,
+      parcelas: null,
+    };
+
+    if (touched.valorReforma && valorReforma <= 0) {
+      errors.valorReforma = "Informe o valor da reforma.";
+    }
+
+    if (touched.entradaPrevista && entradaPrevista < 0) {
+      errors.entradaPrevista = "Informe uma entrada prevista válida.";
+    }
+
+    if (
+      touched.entradaPrevista &&
+      touched.valorReforma &&
+      valorReforma > 0 &&
+      entradaPrevista > valorReforma
+    ) {
+      errors.entradaPrevista =
+        "A entrada prevista não pode ser maior que o valor da reforma.";
+    }
+
+    if (touched.parcelas && (parcelas <= 0 || !Number.isInteger(parcelas))) {
+      errors.parcelas = "Informe a quantidade de parcelas.";
+    }
+
+    return errors;
+  }, [valorReforma, entradaPrevista, parcelas, touched]);
+
+  const isValid =
+    valorReforma > 0 &&
+    entradaPrevista >= 0 &&
+    entradaPrevista <= valorReforma &&
+    parcelas > 0 &&
+    Number.isInteger(parcelas);
+
+  const valorParcela = isValid
+    ? calculatePMT(valorReforma, entradaPrevista, parcelas)
+    : 0;
+
+  const handleCurrencyChange = useCallback(
+    (setter: (v: string) => void) =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/\D/g, "");
+        if (raw === "") {
+          setter("");
+          return;
+        }
+        const numeric = parseInt(raw, 10) / 100;
+        setter(formatCurrencyInput(numeric));
+      },
+    []
+  );
+
+  const handleParcelasChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value.replace(/\D/g, "");
+      setParcelasRaw(raw);
+      if (!touched.parcelas) {
+        setTouched((prev) => ({ ...prev, parcelas: true }));
+      }
+    },
+    [touched.parcelas]
+  );
+
+  const handleShortcut = useCallback((value: number) => {
+    setParcelasRaw(String(value));
+    setTouched((prev) => ({ ...prev, parcelas: true }));
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setValorReformaRaw("");
+    setEntradaPrevistaRaw("");
+    setParcelasRaw("");
+    setCopied(false);
+    setTouched({
+      valorReforma: false,
+      entradaPrevista: false,
+      parcelas: false,
+    });
+  }, []);
+
+  const whatsappText = useMemo(() => {
+    if (!isValid) return "";
+    return `Simulação da reforma:\nValor da reforma: ${formatCurrency(valorReforma)}\nEntrada prevista: ${formatCurrency(entradaPrevista)}\nParcelamento: ${parcelas}x de ${formatCurrency(valorParcela)}\n\nSimulação estimada.`;
+  }, [isValid, valorReforma, entradaPrevista, parcelas, valorParcela]);
+
+  const handleCopy = useCallback(async () => {
+    if (!whatsappText) return;
+    try {
+      await navigator.clipboard.writeText(whatsappText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = whatsappText;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [whatsappText]);
+
+  const handleBlur = useCallback(
+    (field: keyof typeof touched) => () => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+    },
+    []
+  );
+
+  return (
+    <main className="min-h-screen px-4 py-8 md:px-6 lg:px-10 lg:py-12">
+      <div className="mx-auto w-full max-w-[1120px]">
+        {/* Header */}
+        <header className="mb-8">
+          <div
+            className="mb-6 text-xs font-semibold uppercase tracking-[0.3em]"
+            style={{ color: "var(--color-primary)" }}
+          >
+            DECORAFIT
+          </div>
+          <h1
+            className="text-2xl font-bold lg:text-3xl"
+            style={{ color: "var(--color-dark)" }}
+          >
+            Simulador de parcelas
+          </h1>
+          <p
+            className="mt-2 text-sm lg:text-base"
+            style={{ color: "var(--color-dark-muted)" }}
+          >
+            Preencha os dados abaixo para estimar o valor das parcelas da
+            reforma.
+          </p>
+        </header>
+
+        {/* Two-column layout on desktop */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:items-start">
+          {/* Left: Form fields */}
+          <div className="space-y-5">
+            {/* Valor da reforma */}
+            <div>
+              <label
+                htmlFor="valor-reforma"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider"
+                style={{ color: "var(--color-dark-muted)" }}
+              >
+                Valor da reforma
+              </label>
+              <div className="relative">
+                <span
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
+                  style={{ color: "var(--color-dark-subtle)" }}
+                >
+                  R$
+                </span>
+                <input
+                  id="valor-reforma"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0,00"
+                  value={valorReformaRaw}
+                  onChange={handleCurrencyChange(setValorReformaRaw)}
+                  onBlur={handleBlur("valorReforma")}
+                  className="h-12 w-full rounded-lg border bg-white pl-10 pr-4 text-base font-medium transition-colors focus:border-transparent lg:h-11 lg:text-sm"
+                  style={{
+                    borderColor: validation.valorReforma
+                      ? "var(--color-error)"
+                      : "var(--color-border)",
+                    color: "var(--color-dark)",
+                  }}
+                />
+              </div>
+              {validation.valorReforma && (
+                <p
+                  className="mt-1 text-xs"
+                  style={{ color: "var(--color-error)" }}
+                >
+                  {validation.valorReforma}
+                </p>
+              )}
+            </div>
+
+            {/* Entrada prevista */}
+            <div>
+              <label
+                htmlFor="entrada-prevista"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider"
+                style={{ color: "var(--color-dark-muted)" }}
+              >
+                Entrada prevista
+              </label>
+              <div className="relative">
+                <span
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
+                  style={{ color: "var(--color-dark-subtle)" }}
+                >
+                  R$
+                </span>
+                <input
+                  id="entrada-prevista"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0,00"
+                  value={entradaPrevistaRaw}
+                  onChange={handleCurrencyChange(setEntradaPrevistaRaw)}
+                  onBlur={handleBlur("entradaPrevista")}
+                  className="h-12 w-full rounded-lg border bg-white pl-10 pr-4 text-base font-medium transition-colors focus:border-transparent lg:h-11 lg:text-sm"
+                  style={{
+                    borderColor: validation.entradaPrevista
+                      ? "var(--color-error)"
+                      : "var(--color-border)",
+                    color: "var(--color-dark)",
+                  }}
+                />
+              </div>
+              {validation.entradaPrevista && (
+                <p
+                  className="mt-1 text-xs"
+                  style={{ color: "var(--color-error)" }}
+                >
+                  {validation.entradaPrevista}
+                </p>
+              )}
+            </div>
+
+            {/* Parcelas */}
+            <div>
+              <label
+                htmlFor="parcelas"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider"
+                style={{ color: "var(--color-dark-muted)" }}
+              >
+                Parcelas
+              </label>
+              <input
+                id="parcelas"
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={parcelasRaw}
+                onChange={handleParcelasChange}
+                onBlur={handleBlur("parcelas")}
+                className="h-12 w-full rounded-lg border bg-white px-4 text-base font-medium transition-colors focus:border-transparent lg:h-11 lg:text-sm"
+                style={{
+                  borderColor: validation.parcelas
+                    ? "var(--color-error)"
+                    : "var(--color-border)",
+                  color: "var(--color-dark)",
+                }}
+              />
+              {validation.parcelas && (
+                <p
+                  className="mt-1 text-xs"
+                  style={{ color: "var(--color-error)" }}
+                >
+                  {validation.parcelas}
+                </p>
+              )}
+
+              {/* Shortcuts */}
+              <div className="mt-3 flex gap-2">
+                {PARCELA_SHORTCUTS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => handleShortcut(n)}
+                    className="flex h-9 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor:
+                        parcelas === n
+                          ? "var(--color-primary)"
+                          : "var(--color-border)",
+                      backgroundColor:
+                        parcelas === n
+                          ? "var(--color-primary-subtle)"
+                          : "var(--color-bg)",
+                      color:
+                        parcelas === n
+                          ? "var(--color-primary-text)"
+                          : "var(--color-dark-muted)",
+                    }}
+                  >
+                    {n}x
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Result card + actions */}
+          <div className="space-y-4">
+            {/* Result card */}
+            <div
+              className="rounded-xl border p-6 lg:p-8"
+              style={{
+                backgroundColor: "var(--color-bg)",
+                borderColor: "var(--color-border)",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              <h2
+                className="mb-4 text-xs font-semibold uppercase tracking-wider"
+                style={{ color: "var(--color-dark-subtle)" }}
+              >
+                Valor das parcelas
+              </h2>
+
+              {isValid ? (
+                <p
+                  className="text-3xl font-bold lg:text-4xl"
+                  style={{ color: "var(--color-dark)" }}
+                >
+                  {parcelas}x de{" "}
+                  <span style={{ color: "var(--color-primary-text)" }}>
+                    {formatCurrency(valorParcela)}
+                  </span>
+                </p>
+              ) : (
+                <p
+                  className="text-sm"
+                  style={{ color: "var(--color-dark-subtle)" }}
+                >
+                  Preencha os campos para visualizar a simulação.
+                </p>
+              )}
+
+              <p
+                className="mt-4 text-xs"
+                style={{ color: "var(--color-dark-subtle)" }}
+              >
+                Simulação estimada.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <button
+                type="button"
+                disabled={!isValid}
+                onClick={handleCopy}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50 lg:h-11"
+                style={{
+                  backgroundColor: isValid
+                    ? copied
+                      ? "var(--color-success)"
+                      : "var(--color-primary)"
+                    : "var(--color-primary)",
+                  boxShadow:
+                    isValid && !copied ? "var(--shadow-orange)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (isValid && !copied)
+                    e.currentTarget.style.backgroundColor =
+                      "var(--color-primary-hover)";
+                }}
+                onMouseLeave={(e) => {
+                  if (isValid && !copied)
+                    e.currentTarget.style.backgroundColor =
+                      "var(--color-primary)";
+                }}
+              >
+                {copied ? (
+                  <>
+                    <Check size={18} strokeWidth={1.5} />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={18} strokeWidth={1.5} />
+                    Copiar texto para WhatsApp
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClear}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border text-sm font-semibold transition-colors lg:h-11"
+                style={{
+                  borderColor: "var(--color-border)",
+                  color: "var(--color-dark-muted)",
+                  backgroundColor: "var(--color-bg)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    "var(--color-bg-subtle)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "var(--color-bg)";
+                }}
+              >
+                <Trash2 size={18} strokeWidth={1.5} />
+                Limpar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
