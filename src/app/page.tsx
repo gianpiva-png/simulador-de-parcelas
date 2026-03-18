@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Copy, Trash2, Check } from "lucide-react";
+import Image from "next/image";
+import { Copy, Check, Trash2, ChevronRight, BarChart3 } from "lucide-react";
 import { calculatePMT } from "@/lib/pmt";
 import {
   formatCurrency,
@@ -68,6 +69,8 @@ export default function SimuladorPage() {
   const valorParcela = isValid
     ? calculatePMT(valorReforma, entradaPrevista, parcelas)
     : 0;
+
+  const saldoFinanciado = isValid ? valorReforma - entradaPrevista : 0;
 
   const handleCurrencyChange = useCallback(
     (setter: (v: string) => void) =>
@@ -143,238 +146,373 @@ export default function SimuladorPage() {
     []
   );
 
+  // Format the parcela value for the large display
+  const parcelaFormatted = useMemo(() => {
+    if (!isValid) return { integer: "0", decimal: "00" };
+    const parts = valorParcela.toFixed(2).split(".");
+    const integer = parseInt(parts[0], 10).toLocaleString("pt-BR");
+    return { integer, decimal: parts[1] };
+  }, [isValid, valorParcela]);
+
   return (
-    <main className="min-h-screen px-4 py-8 md:px-6 lg:px-10 lg:py-12">
-      <div className="mx-auto w-full max-w-[1120px]">
-        {/* Header */}
-        <header className="mb-8">
-          <div
-            className="mb-6 text-xs font-semibold uppercase tracking-[0.3em]"
-            style={{ color: "var(--color-primary)" }}
-          >
-            DECORAFIT
-          </div>
-          <h1
-            className="text-2xl font-bold lg:text-3xl"
-            style={{ color: "var(--color-dark)" }}
-          >
-            Simulador de parcelas
-          </h1>
-          <p
-            className="mt-2 text-sm lg:text-base"
-            style={{ color: "var(--color-dark-muted)" }}
-          >
-            Preencha os dados abaixo para estimar o valor das parcelas da
-            reforma.
-          </p>
-        </header>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--color-bg-page)" }}>
+      {/* Header */}
+      <header
+        className="w-full px-4 py-4 md:px-8"
+        style={{ background: "var(--color-card-dark)" }}
+      >
+        <div className="mx-auto max-w-[1120px] flex items-center">
+          <Image
+            src="/logo-decorafit.png"
+            alt="Decorafit"
+            width={384}
+            height={31}
+            className="h-7 w-auto sm:h-8"
+            priority
+          />
+        </div>
+      </header>
 
-        {/* Two-column layout on desktop */}
-        <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:items-start">
-          {/* Left: Form fields */}
-          <div className="space-y-5">
-            {/* Valor da reforma */}
-            <div>
-              <label
-                htmlFor="valor-reforma"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "var(--color-dark-muted)" }}
-              >
-                Valor da reforma
-              </label>
-              <div className="relative">
-                <span
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
-                  style={{ color: "var(--color-dark-subtle)" }}
-                >
-                  R$
-                </span>
-                <input
-                  id="valor-reforma"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0,00"
-                  value={valorReformaRaw}
-                  onChange={handleCurrencyChange(setValorReformaRaw)}
-                  onBlur={handleBlur("valorReforma")}
-                  className="h-12 w-full rounded-lg border bg-white pl-10 pr-4 text-base font-medium transition-colors focus:border-transparent lg:h-11 lg:text-sm"
-                  style={{
-                    borderColor: validation.valorReforma
-                      ? "var(--color-error)"
-                      : "var(--color-border)",
-                    color: "var(--color-dark)",
-                  }}
-                />
-              </div>
-              {validation.valorReforma && (
-                <p
-                  className="mt-1 text-xs"
-                  style={{ color: "var(--color-error)" }}
-                >
-                  {validation.valorReforma}
-                </p>
-              )}
-            </div>
-
-            {/* Entrada prevista */}
-            <div>
-              <label
-                htmlFor="entrada-prevista"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "var(--color-dark-muted)" }}
-              >
-                Entrada prevista
-              </label>
-              <div className="relative">
-                <span
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
-                  style={{ color: "var(--color-dark-subtle)" }}
-                >
-                  R$
-                </span>
-                <input
-                  id="entrada-prevista"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0,00"
-                  value={entradaPrevistaRaw}
-                  onChange={handleCurrencyChange(setEntradaPrevistaRaw)}
-                  onBlur={handleBlur("entradaPrevista")}
-                  className="h-12 w-full rounded-lg border bg-white pl-10 pr-4 text-base font-medium transition-colors focus:border-transparent lg:h-11 lg:text-sm"
-                  style={{
-                    borderColor: validation.entradaPrevista
-                      ? "var(--color-error)"
-                      : "var(--color-border)",
-                    color: "var(--color-dark)",
-                  }}
-                />
-              </div>
-              {validation.entradaPrevista && (
-                <p
-                  className="mt-1 text-xs"
-                  style={{ color: "var(--color-error)" }}
-                >
-                  {validation.entradaPrevista}
-                </p>
-              )}
-            </div>
-
-            {/* Parcelas */}
-            <div>
-              <label
-                htmlFor="parcelas"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "var(--color-dark-muted)" }}
-              >
-                Parcelas
-              </label>
-              <input
-                id="parcelas"
-                type="text"
-                inputMode="numeric"
-                placeholder="0"
-                value={parcelasRaw}
-                onChange={handleParcelasChange}
-                onBlur={handleBlur("parcelas")}
-                className="h-12 w-full rounded-lg border bg-white px-4 text-base font-medium transition-colors focus:border-transparent lg:h-11 lg:text-sm"
-                style={{
-                  borderColor: validation.parcelas
-                    ? "var(--color-error)"
-                    : "var(--color-border)",
-                  color: "var(--color-dark)",
-                }}
-              />
-              {validation.parcelas && (
-                <p
-                  className="mt-1 text-xs"
-                  style={{ color: "var(--color-error)" }}
-                >
-                  {validation.parcelas}
-                </p>
-              )}
-
-              {/* Shortcuts */}
-              <div className="mt-3 flex gap-2">
-                {PARCELA_SHORTCUTS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => handleShortcut(n)}
-                    className="flex h-9 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors"
-                    style={{
-                      borderColor:
-                        parcelas === n
-                          ? "var(--color-primary)"
-                          : "var(--color-border)",
-                      backgroundColor:
-                        parcelas === n
-                          ? "var(--color-primary-subtle)"
-                          : "var(--color-bg)",
-                      color:
-                        parcelas === n
-                          ? "var(--color-primary-text)"
-                          : "var(--color-dark-muted)",
-                    }}
-                  >
-                    {n}x
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Main content */}
+      <main className="flex-1 px-4 py-8 md:px-8 lg:py-12 lg:flex lg:items-center">
+        <div className="mx-auto w-full max-w-[1120px]">
+          {/* Title */}
+          <div className="mb-8">
+            <h1
+              className="text-2xl font-bold lg:text-4xl"
+              style={{ color: "var(--color-dark)" }}
+            >
+              Simulador de{" "}
+              <span style={{ color: "var(--color-primary)" }}>Parcelas</span>
+            </h1>
+            <p
+              className="mt-2 text-sm lg:text-base"
+              style={{ color: "var(--color-dark-muted)" }}
+            >
+              Preencha os dados abaixo para estimar o valor das parcelas da
+              reforma.
+            </p>
           </div>
 
-          {/* Right: Result card + actions */}
-          <div className="space-y-4">
-            {/* Result card */}
+          {/* Two-column layout */}
+          <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+            {/* Left: Form card */}
             <div
-              className="rounded-xl border p-6 lg:p-8"
+              className="rounded-2xl border p-6 lg:px-8 lg:py-10"
               style={{
                 backgroundColor: "var(--color-bg)",
                 borderColor: "var(--color-border)",
                 boxShadow: "var(--shadow-sm)",
               }}
             >
-              <h2
-                className="mb-4 text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "var(--color-dark-subtle)" }}
-              >
-                Valor das parcelas
-              </h2>
-
-              {isValid ? (
-                <p
-                  className="text-3xl font-bold lg:text-4xl"
+              {/* Card header */}
+              <div className="mb-6 flex items-center gap-2">
+                <BarChart3
+                  size={20}
+                  strokeWidth={1.5}
+                  style={{ color: "var(--color-dark)" }}
+                />
+                <h2
+                  className="text-base font-bold"
                   style={{ color: "var(--color-dark)" }}
                 >
-                  {parcelas}x de{" "}
-                  <span style={{ color: "var(--color-primary-text)" }}>
-                    {formatCurrency(valorParcela)}
-                  </span>
-                </p>
-              ) : (
-                <p
-                  className="text-sm"
+                  Dados da Simulação
+                </h2>
+              </div>
+
+              {/* Valor + Entrada side by side */}
+              <div className="grid gap-5 sm:grid-cols-2">
+                {/* Valor da reforma */}
+                <div>
+                  <label
+                    htmlFor="valor-reforma"
+                    className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--color-dark-muted)" }}
+                  >
+                    Valor da reforma
+                  </label>
+                  <div className="relative">
+                    <span
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold"
+                      style={{ color: "var(--color-dark-subtle)" }}
+                    >
+                      R$
+                    </span>
+                    <input
+                      id="valor-reforma"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0,00"
+                      value={valorReformaRaw}
+                      onChange={handleCurrencyChange(setValorReformaRaw)}
+                      onBlur={handleBlur("valorReforma")}
+                      className="h-12 w-full rounded-lg border bg-white pl-10 pr-4 text-base font-medium transition-colors lg:h-11 lg:text-sm"
+                      style={{
+                        borderColor: validation.valorReforma
+                          ? "var(--color-error)"
+                          : "var(--color-border)",
+                        color: "var(--color-dark)",
+                      }}
+                    />
+                  </div>
+                  {validation.valorReforma && (
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: "var(--color-error)" }}
+                    >
+                      {validation.valorReforma}
+                    </p>
+                  )}
+                </div>
+
+                {/* Entrada prevista */}
+                <div>
+                  <label
+                    htmlFor="entrada-prevista"
+                    className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--color-dark-muted)" }}
+                  >
+                    Entrada prevista
+                  </label>
+                  <div className="relative">
+                    <span
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold"
+                      style={{ color: "var(--color-dark-subtle)" }}
+                    >
+                      R$
+                    </span>
+                    <input
+                      id="entrada-prevista"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0,00"
+                      value={entradaPrevistaRaw}
+                      onChange={handleCurrencyChange(setEntradaPrevistaRaw)}
+                      onBlur={handleBlur("entradaPrevista")}
+                      className="h-12 w-full rounded-lg border bg-white pl-10 pr-4 text-base font-medium transition-colors lg:h-11 lg:text-sm"
+                      style={{
+                        borderColor: validation.entradaPrevista
+                          ? "var(--color-error)"
+                          : "var(--color-border)",
+                        color: "var(--color-dark)",
+                      }}
+                    />
+                  </div>
+                  {validation.entradaPrevista && (
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: "var(--color-error)" }}
+                    >
+                      {validation.entradaPrevista}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Prazo para pagamento */}
+              <div className="mt-6">
+                <label
+                  htmlFor="parcelas"
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider"
+                  style={{ color: "var(--color-dark-muted)" }}
+                >
+                  Prazo para pagamento
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative">
+                    <input
+                      id="parcelas"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={parcelasRaw}
+                      onChange={handleParcelasChange}
+                      onBlur={handleBlur("parcelas")}
+                      className="h-12 w-24 rounded-lg border bg-white px-3 pr-16 text-base font-medium transition-colors lg:h-11 lg:text-sm"
+                      style={{
+                        borderColor: validation.parcelas
+                          ? "var(--color-error)"
+                          : "var(--color-border)",
+                        color: "var(--color-dark)",
+                      }}
+                    />
+                    <span
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium"
+                      style={{ color: "var(--color-dark-subtle)" }}
+                    >
+                      Meses
+                    </span>
+                  </div>
+                  {/* Shortcut pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {PARCELA_SHORTCUTS.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => handleShortcut(n)}
+                        className="flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold transition-all"
+                        style={{
+                          backgroundColor:
+                            parcelas === n
+                              ? "var(--color-primary)"
+                              : "var(--color-bg)",
+                          color:
+                            parcelas === n
+                              ? "#FFFFFF"
+                              : "var(--color-dark-muted)",
+                          border:
+                            parcelas === n
+                              ? "1px solid var(--color-primary)"
+                              : "1px solid var(--color-border)",
+                        }}
+                      >
+                        {n}x
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {validation.parcelas && (
+                  <p
+                    className="mt-1 text-xs"
+                    style={{ color: "var(--color-error)" }}
+                  >
+                    {validation.parcelas}
+                  </p>
+                )}
+              </div>
+
+              {/* Bottom row: clear + note */}
+              <div className="mt-6 flex items-center justify-between border-t pt-4" style={{ borderColor: "var(--color-border)" }}>
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="flex items-center gap-1.5 text-xs font-semibold transition-colors"
+                  style={{ color: "var(--color-dark-muted)" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "var(--color-dark)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "var(--color-dark-muted)";
+                  }}
+                >
+                  <Trash2 size={14} strokeWidth={1.5} />
+                  LIMPAR SIMULAÇÃO
+                </button>
+                <span
+                  className="text-[11px]"
                   style={{ color: "var(--color-dark-subtle)" }}
                 >
-                  Preencha os campos para visualizar a simulação.
-                </p>
-              )}
-
-              <p
-                className="mt-4 text-xs"
-                style={{ color: "var(--color-dark-subtle)" }}
-              >
-                Simulação estimada.
-              </p>
+                  Simulação estimada.
+                </span>
+              </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+            {/* Right: Dark result card */}
+            <div
+              className="rounded-2xl flex flex-col overflow-hidden lg:self-center"
+              style={{
+                background: "linear-gradient(180deg, #2A2A45 0%, #1B1B2F 100%)",
+                boxShadow: "var(--shadow-lg)",
+              }}
+            >
+              {/* Orange gradient bar at top */}
+              <div
+                className="h-1 w-full"
+                style={{
+                  background: "linear-gradient(90deg, #FF6633 0%, #FFB347 100%)",
+                }}
+              />
+              <div className="p-6 lg:p-8 flex flex-col">
+              {/* Parcela estimada label */}
+              <p
+                className="text-[11px] font-semibold uppercase tracking-widest text-center mb-4"
+                style={{ color: "var(--color-primary)" }}
+              >
+                Parcela Estimada
+              </p>
+
+              {/* Large value */}
+              <div className="text-center mb-6">
+                {isValid ? (
+                  <p className="text-white">
+                    <span className="text-lg font-semibold align-top">R$</span>
+                    <span className="text-5xl font-bold mx-1 leading-none">
+                      {parcelaFormatted.integer}
+                    </span>
+                    <span className="text-lg font-semibold align-top">
+                      ,{parcelaFormatted.decimal}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-white/40 text-sm">
+                    Preencha os campos para visualizar a simulação.
+                  </p>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div
+                className="h-px w-full mb-5"
+                style={{ background: "rgba(255,255,255,0.1)" }}
+              />
+
+              {/* Details rows */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Total da reforma
+                  </span>
+                  <span className="text-sm font-semibold text-white">
+                    {isValid ? formatCurrency(valorReforma) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Entrada
+                  </span>
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: "var(--color-primary)" }}
+                  >
+                    {isValid ? formatCurrency(entradaPrevista) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Saldo financiado
+                  </span>
+                  <span className="text-sm font-semibold text-white">
+                    {isValid ? formatCurrency(saldoFinanciado) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Prazo escolhido
+                  </span>
+                  <span className="text-sm font-bold italic text-white">
+                    {isValid ? `${parcelas} Meses` : "—"}
+                  </span>
+                </div>
+              </div>
+
+              {/* CTA Button */}
               <button
                 type="button"
                 disabled={!isValid}
                 onClick={handleCopy}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50 lg:h-11"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold text-white uppercase tracking-wider transition-all disabled:cursor-not-allowed disabled:opacity-40"
                 style={{
                   backgroundColor: isValid
                     ? copied
@@ -397,41 +535,52 @@ export default function SimuladorPage() {
               >
                 {copied ? (
                   <>
-                    <Check size={18} strokeWidth={1.5} />
+                    <Check size={18} strokeWidth={2} />
                     Copiado!
                   </>
                 ) : (
                   <>
-                    <Copy size={18} strokeWidth={1.5} />
-                    Copiar texto para WhatsApp
+                    <ChevronRight size={18} strokeWidth={2} />
+                    Copiar para WhatsApp
                   </>
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border text-sm font-semibold transition-colors lg:h-11"
-                style={{
-                  borderColor: "var(--color-border)",
-                  color: "var(--color-dark-muted)",
-                  backgroundColor: "var(--color-bg)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    "var(--color-bg-subtle)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--color-bg)";
-                }}
-              >
-                <Trash2 size={18} strokeWidth={1.5} />
-                Limpar
-              </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+
+      {/* Footer */}
+      <footer
+        className="w-full px-4 py-5 md:px-8 mt-auto"
+        style={{ background: "var(--color-card-dark)" }}
+      >
+        <div className="mx-auto max-w-[1120px] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white font-bold text-[10px]"
+              style={{ background: "var(--color-dark-subtle)" }}
+            >
+              &#923;
+            </div>
+            <span
+              className="text-[11px] font-semibold tracking-wider uppercase"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
+              Decorafit Studio
+            </span>
+          </div>
+          <p
+            className="text-[11px]"
+            style={{ color: "rgba(255,255,255,0.35)" }}
+          >
+            &copy; 2024 Decorafit Engenharia e Interiores. Todos os direitos
+            reservados.
+          </p>
+        </div>
+      </footer>
+    </div>
   );
 }

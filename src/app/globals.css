@@ -4,37 +4,47 @@
   --color-primary: #FF6633;
   --color-primary-hover: #E5572B;
   --color-primary-subtle: #FFF0EB;
-  --color-primary-text: #CC4422;
-  --color-dark: #262D3B;
+  --color-primary-text: #FF6633;
+  --color-dark: #1B1B2F;
   --color-dark-muted: #3D4863;
   --color-dark-subtle: #6B7591;
   --color-neutral: #B8B9B8;
   --color-bg: #FFFFFF;
-  --color-bg-subtle: #F7F7F6;
+  --color-bg-subtle: #F5F5F5;
+  --color-bg-page: #FAFAFA;
   --color-border: #E5E5E4;
   --color-success: #2D7D5A;
   --color-warning: #D97706;
   --color-error: #DC2626;
   --color-info: #2563EB;
 
+  --color-card-dark: #1B1B2F;
+  --color-card-dark-secondary: #2A2A45;
+
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 8px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
   --shadow-orange: 0 4px 12px rgba(255,102,51,0.30);
 }
 
 @theme inline {
-  --color-background: var(--color-bg);
+  --color-background: var(--color-bg-page);
   --color-foreground: var(--color-dark);
   --font-sans: var(--font-montserrat);
 }
 
 body {
-  background: var(--color-bg-subtle);
+  background: var(--color-bg-page);
   color: var(--color-dark);
   font-family: var(--font-montserrat), sans-serif;
 }
 
-input:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
