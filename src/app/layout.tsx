@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Simulador de Parcelas — Decorafit",
   description:
     "Simule rapidamente o valor das parcelas da reforma de apartamento.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

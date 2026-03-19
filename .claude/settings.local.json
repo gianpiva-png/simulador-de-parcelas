@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:decorafit.com.br)",
+      "Bash(curl -L -o /tmp/decorafit-icon.png \"https://decorafit.com.br/wp-content/uploads/2025/01/Icone-fundo-redondo.png\")",
+      "Read(//tmp/**)",
+      "Bash(curl -L -o /tmp/decorafit-favicon.ico \"https://decorafit.com.br/favicon.ico\")"
+    ]
+  }
+}
