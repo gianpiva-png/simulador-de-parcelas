@@ -556,31 +556,7 @@ export default function SimuladorPage() {
       <footer
         className="w-full px-4 py-5 md:px-8 mt-auto"
         style={{ background: "var(--color-card-dark)" }}
-      >
-        <div className="mx-auto max-w-[1120px] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-full text-white font-bold text-[10px]"
-              style={{ background: "var(--color-dark-subtle)" }}
-            >
-              &#923;
-            </div>
-            <span
-              className="text-[11px] font-semibold tracking-wider uppercase"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              Decorafit Studio
-            </span>
-          </div>
-          <p
-            className="text-[11px]"
-            style={{ color: "rgba(255,255,255,0.35)" }}
-          >
-            &copy; 2024 Decorafit Engenharia e Interiores. Todos os direitos
-            reservados.
-          </p>
-        </div>
-      </footer>
+      />
     </div>
   );
 }
