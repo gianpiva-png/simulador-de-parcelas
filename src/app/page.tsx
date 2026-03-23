@@ -159,7 +159,7 @@ export default function SimuladorPage() {
       {/* Header */}
       <header
         className="w-full px-4 py-4 md:px-8"
-        style={{ background: "var(--color-card-dark)" }}
+        style={{ background: "var(--color-primary)" }}
       >
         <div className="mx-auto max-w-[1120px] flex items-center">
           <Image
@@ -574,7 +574,7 @@ export default function SimuladorPage() {
       {/* Footer */}
       <footer
         className="w-full px-4 py-5 md:px-8 mt-auto"
-        style={{ background: "var(--color-card-dark)" }}
+        style={{ background: "var(--color-primary)" }}
       />
     </div>
   );
