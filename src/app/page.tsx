@@ -428,7 +428,7 @@ export default function SimuladorPage() {
                 className="text-[11px] font-semibold uppercase tracking-widest text-center mb-4"
                 style={{ color: "var(--color-primary)" }}
               >
-                Parcela Estimada
+                Parcela
               </p>
 
               {/* Large value */}
@@ -463,17 +463,6 @@ export default function SimuladorPage() {
                     className="text-[11px] font-semibold uppercase tracking-wider"
                     style={{ color: "rgba(255,255,255,0.45)" }}
                   >
-                    Total da reforma
-                  </span>
-                  <span className="text-sm font-semibold text-white">
-                    {isValid ? formatCurrency(valorReforma) : "—"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-[11px] font-semibold uppercase tracking-wider"
-                    style={{ color: "rgba(255,255,255,0.45)" }}
-                  >
                     Entrada
                   </span>
                   <span
@@ -492,6 +481,17 @@ export default function SimuladorPage() {
                   </span>
                   <span className="text-sm font-semibold text-white">
                     {isValid ? formatCurrency(saldoFinanciado) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Total da reforma
+                  </span>
+                  <span className="text-sm font-semibold text-white">
+                    {isValid ? formatCurrency(valorReforma) : "—"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -551,6 +551,25 @@ export default function SimuladorPage() {
           </div>
         </div>
       </main>
+
+      {/* Banner */}
+      <section className="w-full px-4 py-10 md:px-8">
+        <div
+          className="mx-auto max-w-[1120px] rounded-2xl border border-dashed flex items-center justify-center"
+          style={{
+            borderColor: "var(--color-border)",
+            backgroundColor: "var(--color-bg)",
+            minHeight: "200px",
+          }}
+        >
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--color-dark-subtle)" }}
+          >
+            Espaço reservado para banner
+          </span>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer
