@@ -52,6 +52,16 @@ export default function SimuladorPage() {
         "A entrada prevista não pode ser maior que o valor da reforma.";
     }
 
+    if (
+      touched.entradaPrevista &&
+      touched.valorReforma &&
+      valorReforma > 0 &&
+      entradaPrevista < valorReforma * 0.3
+    ) {
+      errors.entradaPrevista =
+        "A entrada deve ser no mínimo 30% do valor da reforma.";
+    }
+
     if (touched.parcelas && (parcelas <= 0 || !Number.isInteger(parcelas))) {
       errors.parcelas = "Informe a quantidade de parcelas.";
     }
@@ -61,7 +71,7 @@ export default function SimuladorPage() {
 
   const isValid =
     valorReforma > 0 &&
-    entradaPrevista >= 0 &&
+    entradaPrevista >= valorReforma * 0.3 &&
     entradaPrevista <= valorReforma &&
     parcelas > 0 &&
     Number.isInteger(parcelas);
