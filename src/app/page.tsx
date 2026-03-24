@@ -58,8 +58,9 @@ export default function SimuladorPage() {
       valorReforma > 0 &&
       entradaPrevista < valorReforma * 0.3
     ) {
+      const minEntrada = valorReforma * 0.3;
       errors.entradaPrevista =
-        "A entrada deve ser no mínimo 30% do valor da reforma.";
+        `A entrada deve ser no mínimo 30% do valor da reforma (${formatCurrency(minEntrada)}).`;
     }
 
     if (touched.parcelas && (parcelas <= 0 || !Number.isInteger(parcelas))) {
