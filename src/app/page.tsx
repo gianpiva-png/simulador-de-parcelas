@@ -559,27 +559,19 @@ export default function SimuladorPage() {
               </div>
             </div>
           </div>
+
+          {/* Banner */}
+          <div className="mt-8 overflow-hidden rounded-2xl">
+            <Image
+              src="/banner-simulador.png"
+              alt="O apê que você sonha cabe no seu bolso."
+              width={1120}
+              height={200}
+              className="w-full h-auto object-cover"
+            />
+          </div>
         </div>
       </main>
-
-      {/* Banner */}
-      <section className="w-full px-4 py-10 md:px-8">
-        <div
-          className="mx-auto max-w-[1120px] rounded-2xl border border-dashed flex items-center justify-center"
-          style={{
-            borderColor: "var(--color-border)",
-            backgroundColor: "var(--color-bg)",
-            minHeight: "200px",
-          }}
-        >
-          <span
-            className="text-sm font-medium"
-            style={{ color: "var(--color-dark-subtle)" }}
-          >
-            Espaço reservado para banner
-          </span>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer
