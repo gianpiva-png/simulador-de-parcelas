@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Check, Trash2, ChevronRight, BarChart3 } from "lucide-react";
+import { Copy, Check, Trash2, ChevronRight, BarChart3, Settings, X } from "lucide-react";
 import { calculatePMT } from "@/lib/pmt";
 import {
   formatCurrency,
@@ -11,21 +11,45 @@ import {
 } from "@/lib/currency";
 
 const PARCELA_SHORTCUTS = [4, 6, 9, 12, 18, 24] as const;
+const DEFAULT_RATE = 0.035;
+const STORAGE_KEY = "simulador-rates";
+
+type RateMap = Record<number, number>;
+
+function loadRates(): RateMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return {};
+}
+
+function saveRates(rates: RateMap): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(rates));
+}
 
 export default function SimuladorPage() {
   const [valorReformaRaw, setValorReformaRaw] = useState("");
   const [entradaPrevistaRaw, setEntradaPrevistaRaw] = useState("");
   const [parcelasRaw, setParcelasRaw] = useState("");
   const [copied, setCopied] = useState(false);
+  const [rateMap, setRateMap] = useState<RateMap>({});
+  const [showSettings, setShowSettings] = useState(false);
   const [touched, setTouched] = useState({
     valorReforma: false,
     entradaPrevista: false,
     parcelas: false,
   });
 
+  useEffect(() => {
+    setRateMap(loadRates());
+  }, []);
+
   const valorReforma = parseCurrencyInput(valorReformaRaw);
   const entradaPrevista = parseCurrencyInput(entradaPrevistaRaw);
   const parcelas = parseInt(parcelasRaw || "0", 10);
+  const currentRate = rateMap[parcelas] ?? DEFAULT_RATE;
 
   const validation = useMemo(() => {
     const errors: Record<string, string | null> = {
@@ -78,7 +102,7 @@ export default function SimuladorPage() {
     Number.isInteger(parcelas);
 
   const valorParcela = isValid
-    ? calculatePMT(valorReforma, entradaPrevista, parcelas)
+    ? calculatePMT(valorReforma, entradaPrevista, parcelas, currentRate)
     : 0;
 
   const saldoFinanciado = isValid ? valorReforma - entradaPrevista : 0;
@@ -150,6 +174,16 @@ export default function SimuladorPage() {
     }
   }, [whatsappText]);
 
+  const handleRateChange = useCallback((parcelaCount: number, ratePercent: string) => {
+    const parsed = parseFloat(ratePercent.replace(",", "."));
+    if (isNaN(parsed)) return;
+    setRateMap((prev) => {
+      const next = { ...prev, [parcelaCount]: parsed / 100 };
+      saveRates(next);
+      return next;
+    });
+  }, []);
+
   const handleBlur = useCallback(
     (field: keyof typeof touched) => () => {
       setTouched((prev) => ({ ...prev, [field]: true }));
@@ -181,6 +215,21 @@ export default function SimuladorPage() {
             className="h-7 w-auto sm:h-8"
             priority
           />
+          <button
+            type="button"
+            onClick={() => setShowSettings(true)}
+            className="ml-auto p-2 rounded-lg transition-colors"
+            style={{ color: "rgba(255,255,255,0.6)" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#FFFFFF";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+            }}
+            aria-label="Configurações de taxas"
+          >
+            <Settings size={20} strokeWidth={1.5} />
+          </button>
         </div>
       </header>
 
@@ -579,6 +628,116 @@ export default function SimuladorPage() {
         className="w-full px-4 py-5 md:px-8 mt-auto"
         style={{ background: "var(--color-primary)" }}
       />
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(27,27,47,0.6)" }}
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl relative overflow-hidden"
+            style={{
+              background: "linear-gradient(180deg, #2A2A45 0%, #1B1B2F 100%)",
+              boxShadow: "var(--shadow-lg)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Orange gradient bar at top */}
+            <div
+              className="h-1 w-full"
+              style={{
+                background: "linear-gradient(90deg, #FF6633 0%, #FFB347 100%)",
+              }}
+            />
+
+            <div className="p-6">
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setShowSettings(false)}
+                className="absolute top-5 right-4 p-1 rounded transition-colors"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#FFFFFF";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "rgba(255,255,255,0.5)";
+                }}
+              >
+                <X size={18} strokeWidth={2} />
+              </button>
+
+              {/* Title */}
+              <h3
+                className="text-sm font-bold uppercase tracking-wider mb-1"
+                style={{ color: "var(--color-primary)" }}
+              >
+                Configurações
+              </h3>
+              <p
+                className="text-xs mb-6"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+              >
+                Taxa de juros mensal por quantidade de parcelas
+              </p>
+
+              {/* Rate inputs */}
+              <div className="space-y-3">
+                {PARCELA_SHORTCUTS.map((n) => (
+                  <div
+                    key={n}
+                    className="flex items-center justify-between gap-4"
+                  >
+                    <span className="text-sm font-semibold text-white w-16">
+                      {n}x
+                    </span>
+                    <div className="relative flex-1 max-w-[140px]">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        defaultValue={((rateMap[n] ?? DEFAULT_RATE) * 100)
+                          .toFixed(1)
+                          .replace(".", ",")}
+                        onBlur={(e) => handleRateChange(n, e.target.value)}
+                        className="h-10 w-full rounded-lg border bg-white/10 px-3 pr-8 text-sm font-medium text-white text-right"
+                        style={{ borderColor: "rgba(255,255,255,0.15)" }}
+                      />
+                      <span
+                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs"
+                        style={{ color: "rgba(255,255,255,0.45)" }}
+                      >
+                        %
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Reset button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setRateMap({});
+                  localStorage.removeItem(STORAGE_KEY);
+                  setShowSettings(false);
+                }}
+                className="mt-6 text-xs font-semibold uppercase tracking-wider transition-colors"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--color-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+                }}
+              >
+                Restaurar padrão (3,5%)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
